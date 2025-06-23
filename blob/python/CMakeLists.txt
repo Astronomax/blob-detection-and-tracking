@@ -23,6 +23,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES
 
 target_link_libraries(${MODULE_NAME} PRIVATE
     blob_detector
+    blob_tracker
     pybind11::module
 )
 

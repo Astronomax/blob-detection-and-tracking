@@ -38,7 +38,7 @@ namespace blobs {
 		struct object {
 			o_status status;
 			unsigned int id;
-			blob<float> blob_data;
+			blob<double> blob_data;
 		};
 
 		/**
@@ -60,7 +60,7 @@ namespace blobs {
 		 * \return Tracked objects with assigned IDs and statuses
 		 */
 		std::vector<object>
-		track(const std::vector<blob<float>> &blobs, float move_threshold, float scale_threshold);
+		track(const std::vector<blob<double>> &blobs, double move_threshold, double scale_threshold);
 
 	private:
 		struct internal_state {

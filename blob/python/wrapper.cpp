@@ -2,6 +2,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include "../core/src/blob_detector/blob_detector.hpp"
+#include "../core/src/blob_tracker/blob_tracker.hpp"
 
 namespace py = pybind11;
 using namespace blobs;
@@ -23,9 +24,9 @@ matrix<double> numpy_to_matrix(py::array_t<double>& input) {
 
 void bind_blob(py::module& m) {
     py::class_<blob<double>>(m, "Blob")
-        .def_readonly("x", &blob<double>::x)
-        .def_readonly("y", &blob<double>::y)
-        .def_readonly("r", &blob<double>::r);
+        .def_readwrite("x", &blob<double>::x)
+        .def_readwrite("y", &blob<double>::y)
+        .def_readwrite("r", &blob<double>::r);
 }
 
 void bind_detect_blobs(py::module& m) {
@@ -176,6 +177,47 @@ void bind_prune_blobs(py::module& m) {
     );
 }
 
+void bind_blob_tracker(py::module& m) {
+    py::class_<blob_tracker>(m, "BlobTracker")
+        .def(py::init<bool>(),
+            py::arg("use_prediction") = true,
+            "Initialize blob tracker\n\n"
+            "Args:\n"
+            "    use_prediction: Whether to use Kalman filter prediction (default: True)"
+        )
+        .def("track", 
+            [](blob_tracker& tracker, 
+               const std::vector<blob<double>>& blobs,
+               float move_threshold,
+               float scale_threshold) {
+                
+                auto tracked_objects = tracker.track(blobs, move_threshold, scale_threshold);
+
+                std::vector<py::dict> result;
+                for (const auto& obj : tracked_objects) {
+                    py::dict py_obj;
+                    py_obj["id"] = obj.id;
+                    py_obj["status"] = static_cast<int>(obj.status);
+                    py_obj["x"] = obj.blob_data.x;
+                    py_obj["y"] = obj.blob_data.y;
+                    py_obj["r"] = obj.blob_data.r;
+                    result.push_back(py_obj);
+                }
+                return result;
+            },
+            py::arg("blobs"),
+            py::arg("move_threshold") = std::numeric_limits<float>::infinity(),
+            py::arg("scale_threshold") = 1.5f,
+            "Track blobs between frames\n\n"
+            "Args:\n"
+            "    blobs: List of detected Blob objects\n"
+            "    move_threshold: Max allowed movement between frames (pixels)\n"
+            "    scale_threshold: Max allowed scale change (ratio)\n"
+            "Returns:\n"
+            "    List of dicts with tracking info (id, status, x, y, r)"
+        );
+}
+
 PYBIND11_MODULE(_blob_internal, m) {
     py::enum_<conv_method>(m, "ConvMethod")
         .value("AUTO", conv_method::AUTO)
@@ -184,7 +226,15 @@ PYBIND11_MODULE(_blob_internal, m) {
         .value("FFT_FAST", conv_method::FFT_FAST)
         .export_values();
 
+    py::enum_<blob_tracker::o_status>(m, "ObjectStatus")
+        .value("BORN", blob_tracker::o_status::BORN)
+        .value("ALIVE", blob_tracker::o_status::ALIVE)
+        .value("GHOST", blob_tracker::o_status::GHOST)
+        .value("DIED", blob_tracker::o_status::DIED)
+        .export_values();
+
     bind_blob(m);
     bind_detect_blobs(m);
     bind_prune_blobs(m);
+    bind_blob_tracker(m);
 }

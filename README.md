@@ -1,3 +1,5 @@
 # blob-tracker
 
-![image](./example/birds_processed.jpg)
+![image](./example/output1.jpg)
+
+![image](./example/output2.gif)

@@ -10,7 +10,7 @@ using matrix = boost::numeric::ublas::matrix<T>;
 
 namespace blobs {
 	struct position {
-		float i, j;
+		double i, j;
 	};
 
 	blob_tracker::blob_tracker(bool use_prediction) : m_use_prediction(use_prediction)
@@ -25,13 +25,13 @@ namespace blobs {
 
 	std::vector<blob_tracker::object>
 	blob_tracker::track
-		(const std::vector<blob<float>> &blobs,
-		float move_threshold,
-		float scale_threshold)
+		(const std::vector<blob<double>> &blobs,
+		double move_threshold,
+		double scale_threshold)
 	{
 		size_t n = state.size();
 		size_t m = blobs.size();
-		matrix<float> g(n, m);
+		matrix<double> g(n, m);
 		matrix<bool> c(n, m);
 
 		std::vector<position> predictions(n);
@@ -51,13 +51,13 @@ namespace blobs {
 		std::fill(c.data().begin(), c.data().end(), true);
 		for (ptrdiff_t i = 0; i < n; i++) {
 			for (ptrdiff_t j = 0; j < m; j++) {
-				auto di = (float) (predictions[i].i - (float)blobs[j].y);
-				auto dj = (float) (predictions[i].j - (float)blobs[j].x);
-				float distance = /*sqrtf*/(di * di + dj * dj);
+				auto di = (double) (predictions[i].i - (double)blobs[j].y);
+				auto dj = (double) (predictions[i].j - (double)blobs[j].x);
+				double distance = /*sqrtf*/(di * di + dj * dj);
 				g(i, j) = distance;
 				if (distance > move_threshold)
 					c(i, j) = false;
-				float scale = state[i].obj.blob_data.r / blobs[j].r;
+				double scale = state[i].obj.blob_data.r / blobs[j].r;
 				if (scale < 1.f / scale_threshold || scale_threshold < scale)
 					c(i, j) = false;
 			}
@@ -111,8 +111,8 @@ namespace blobs {
 		if(m_use_prediction) {
 			for (auto &obj_data: state) {
 				obj_data.kf.update({
-					(float) obj_data.obj.blob_data.y,
-					(float) obj_data.obj.blob_data.x
+					(double) obj_data.obj.blob_data.y,
+					(double) obj_data.obj.blob_data.x
 				});
 			}
 		}

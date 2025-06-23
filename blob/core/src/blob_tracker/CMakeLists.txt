@@ -18,7 +18,9 @@ set(SOURCES
         blob_tracker.cpp
         )
 
-add_library(blob_tracker ${HEADERS} ${SOURCES})
+add_library(blob_tracker SHARED ${HEADERS} ${SOURCES})
+target_compile_options(blob_tracker PRIVATE -fPIC)
+
 if(RASPBERRYPI)
          target_compile_options(blob_tracker PUBLIC
         -march=armv8-a+crc+simd

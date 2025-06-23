@@ -14,7 +14,9 @@ set(HEADERS
         kdtree/kdtree.hpp
         )
 
-add_library(blob_detector ${HEADERS})
+add_library(blob_detector SHARED ${HEADERS})
+target_compile_options(blob_detector PRIVATE -fPIC)
+
 if(RASPBERRYPI)
          target_compile_options(blob_detector PUBLIC
         -march=armv8-a+crc+simd
