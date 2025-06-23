@@ -26,7 +26,7 @@ namespace hungarian {
 			std::swap(n, m);
 			transposed = true;
 		}
-
+		/* http://e-maxx.ru/algo/assignment_hungary */
 		std::vector<float> u(n + 1), v(m + 1);
 		std::vector<ptrdiff_t> p(m + 1), way(m + 1);
 		for (ptrdiff_t i = 1; i <= n; ++i) {

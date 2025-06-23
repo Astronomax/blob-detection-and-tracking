@@ -2,7 +2,7 @@
 #define BLOB_TRACKER_BLOB_HPP
 
 /**
- * \brief 	Реализация алгоритмов обнаружения и отслеживания.
+ * \brief Implementation of detection and tracking algorithms.
  */
 namespace blobs {
 	template<typename FPT>

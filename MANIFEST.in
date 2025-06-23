@@ -1,0 +1,4 @@
+include blob/core/blob/*.hpp
+recursive-include blob/core/blob_detector/
+recursive-include blob/core/blob_tracker/
+recursive-include blob/_internal *

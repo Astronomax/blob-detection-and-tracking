@@ -6,10 +6,10 @@
 #include <boost/pool/pool_alloc.hpp>
 
 /**
- * \brief 	Singleton-класс, реализующий быстрое преобразование Фурье.
- * 			Позволяет перемножить два многочлена длины n за O(nlogn).
+ * \brief  Singleton class implementing the Fast Fourier Transform (FFT).
+ *         Allows multiplying two polynomials of length n in O(n log n) time.
  * 
- * \tparam FPT 		floating point type (тип, используемый внутри класса в качестве fpt).
+ * \tparam FPT     Floating point type (type used internally by the class as fpt).
  */
 template<typename FPT>
 struct fft_slow {
@@ -18,17 +18,17 @@ struct fft_slow {
 	typedef std::complex<FPT> P;
 
 	/**
-	 * \brief 	Метод совершает преобразование Фурье над исходным массивом a.
+	 * \brief  Performs Fourier transform on the input array a.
 	 * 
-	 * \param n			Длина входного массива a. n должно в точности быть степенью 2.
-	 * \param a			Входной массив, к которому требуется применить преобразование Фурье.
-	 * 					Размер массива должен быть в точности равен n = 2^base,
-	 * 					для некотого целого base.
-	 * \param inverse	true 	-> обратное преобразование
-	 * 					false 	-> прямое преобразование
+	 * \param n         Length of input array a. Must be exactly a power of 2.
+	 * \param a         Input array for Fourier transform.
+	 *                  Array size must satisfy n = 2^base for some integer base.
+	 * \param inverse   Transform direction:
+	 *                  true  -> inverse transform
+	 *                  false -> forward transform
 	 * 
-	 * \return		Результат преобразования (значния многочлена в 2^base точках).
-	 */	
+	 * \return      Transform result (polynomial values at 2^base points).
+	 */
 	static void
 	compute(int n, std::vector<P> &a, bool inverse)
 	{
@@ -59,12 +59,12 @@ struct fft_slow {
 	}
 
 	/**
-	 * \brief 	Метод перемножает два многочлена при помощи преобразования Фурье за O(nlogn).
+	 * \brief  Multiplies two polynomials using Fourier transform in O(n log n) time.
 	 * 
-	 * \param A		Первый многочлен. A[y] соответствует коэффициенту при x^y.
-	 * \param B		Второй многочлен. B[y] соответствует коэффициенту при x^y.
+	 * \param A     First polynomial. A[y] corresponds to the coefficient of x^y.
+	 * \param B     Second polynomial. B[y] corresponds to the coefficient of x^y.
 	 * 
-	 * \return		Произведение многочленов A и B.
+	 * \return      Product of polynomials A and B.
 	 */
 	static std::vector<FPT>
 	multiply_polynomials(const std::vector<FPT> &A, const std::vector<FPT> &B)

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "../blob_detector/blob_detector.hpp"
-#include "../blob_tracker/blob_tracker.hpp"
+#include "../src/blob_detector/blob_detector.hpp"
+#include "../src/blob_tracker/blob_tracker.hpp"
 #include <random>
 
 namespace blobs {

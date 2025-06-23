@@ -9,7 +9,9 @@
 #include <functional>
 
 /**
- * \brief 	Реализация k-dimensional дерева.
+ * \brief Implementation of a k-dimensional tree (k-d tree) data structure.
+ * 
+ * https://github.com/gishi523/kd-tree/
  */
 namespace kdt {
 	template <class PointT>

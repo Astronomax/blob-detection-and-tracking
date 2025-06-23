@@ -1,3 +1,5 @@
+blob/_internal
+blob.egg-info
 build
-docs/html
-docs/latex
+dist
+.vscode

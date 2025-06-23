@@ -18,60 +18,60 @@ namespace blobs {
 		size_t rows, cols;
 	};
 
-	/*! Метод свертки */
+	/*! Convolution method */
 	enum class conv_method {
-		AUTO, 		/*!<Максимально быстрый метод, использует SIMPLE для небольших фильтров,
-				 	 *	и FFT_FAST для больших фильтров, засчет чего достигается высокая скорость. */
-		SIMPLE,		/*!<Реализация свертки "в лоб", для небольших фильров работает достаточно быстро. */
-		FFT_SLOW,	/*!<Реализация свертки через дискретное проеобразование Фурье.
-				 	 *	Более медленная реализация преобразования Фурье, чем FFT_FAST, однако
-				 	 *	в отличие от FFT_FAST обладает достаточно хорошей точностью. */
-		FFT_FAST	/*!<Реализация свертки через дискретное проеобразование Фурье.
-				 	 *	Работает значительно быстрее, чем FFT_FAST, однако имеет серьезный недостаток:
-				 	 *	точность сильно зависит от размеров сворачиваемого изображения
-				 	 *	(чем больше сворачиваемое изображение, тем сильнее страдает точность).*/
+		AUTO,		/*!< Uses fastest available method:
+					*   - SIMPLE for small filters
+					*   - FFT_FAST for large filters
+					*   Provides optimal performance */
+		SIMPLE,		/*!< Straightforward convolution implementation.
+					*   Fast for small filter kernels */
+		FFT_SLOW,	/*!< Fourier-transform based convolution.
+					*   Slower FFT implementation but maintains
+					*   better accuracy than FFT_FAST */
+		FFT_FAST	/*!< Fast Fourier-transform based convolution.
+					*   Superior performance but accuracy degrades
+					*   with increasing image size */
 	};
 
 	/**
-	 * \brief Singleton-класс, реализующий LoG-фильтр. Обнаруживает контрастные участки на изображении,
-	 * определяя их местоположение и приблизительный "радиус".
+	 * \brief	Singleton class implementing LoG (Laplacian of Gaussian) filter.
+	 *			Detects high-contrast image regions (blobs) by identifying their
+	 *			locations and approximate "radius" values.
 	 * 
-	 * \tparam FPT 		floating point type (тип, используемый внутри класса в качестве fpt).
-	 * \tparam CONV_METHOD 	Метод, который будет использоваться при свёртке. (см. conv_method)
-	 * \tparam USE_SCALING	Булевый флаг, который отвечает за то, как будет строиться scale space.
-	 *			При использовании масштабирования, ядро свертки всегда одно,
-	 *			меняется только размер картинки пропорционально текущей sigma.
-	 *			Если масштабирование не используется, scale space строится "честно" -
-	 *			изображение в исходном масштабе сворачивается с ядром, соответствующим текущей sigma.
-	 *			Использование масштабирования ведет к значительному улучшению
-	 *			производительности, но при этом, конечно, страдает точность.
+	 * \tparam FPT			Floating-point type used internally for computations.
+	 * \tparam CONV_METHOD	Convolution method to be used (see conv_method enum).
+	 * \tparam USE_SCALING	Boolean flag controlling scale space construction:
+	 *						- When true: Uses single convolution kernel and scales
+	 *						 the image proportionally to current sigma (faster but
+	 *						 less accurate)
+	 *						- When false: Builds scale space "properly" by convolving
+	 *						 original-scale image with sigma-adjusted kernels
+	 *						 (more accurate but slower)
 	 */
 	template<typename FPT = float, conv_method CONV_METHOD = conv_method::AUTO, bool USE_SCALING = true>
 	class blob_detector {
 	public:
 		blob_detector() = delete;
 
-		/**
-		 * \brief Метод обнаруживает пятна на изображении, используя Лаплассиан Гауссиана.
-		 *  Для каждого найденного пятна на изображении метод возвращает координаты и примерный радиус пятна.
-		 * 
-		 * \param image		Входное монохромное изображение.
-		 * 			Предполагается, что пятна - это светлые области на темном фоне.
-		 * \param min_sigma	Минимальное стандартное отклонение ядра Гауссиана.
-		 * 			Чем меньше эта величина, тем более мелкие пятна могут обнаруживаться.
-		 * \param max_sigma	Максимальное стандартное отклонение ядра Гауссиана.
-		 * 			Чем больше эта величина, тем более крупные пятна могут обнаруживаться.
-		 * \param num_sigma	Количество промежуточных значений стандартных отклонений
-		 * 			между `min_sigma` и `max_sigma`.
-		 * \param threshold_abs	Нижняя граница максимумов в scale_space.
-		 * 			Если значение в точке локальные максимума меньше чем `threshold`, то
-		 * 			данная точка игнорируются. Чем меньше эта величина, тем более низкий
-		 * 			порог интенсивности используется, тем больше пятен будет обнаружено.
-		 * \param overlap	Значение от 0 до 1.
-		 * 			Если площадь пересечения двух объектов занимает от площади наименьшего
-		 * 			объекта долю, большую чем overlap, то меньший объект удаляется.
-		 * \return	Массив обнаруженных объеков.
-		 */
+	/**
+	 * \brief	Detects blobs in an image using Laplacian of Gaussian (LoG).
+	 *			Returns coordinates and approximate radius for each detected blob.
+	 * 
+	 * \param image			Input grayscale image (expects bright blobs on dark background)
+	 * \param min_sigma		Minimum Gaussian kernel standard deviation:
+	 *						- Smaller values detect finer details
+	 * \param max_sigma		Maximum Gaussian kernel standard deviation:
+	 *						- Larger values detect larger features
+	 * \param num_sigma		Number of intermediate sigma values between min_sigma and max_sigma
+	 * \param threshold_abs	Absolute intensity threshold for scale-space maxima:
+	 *						- Lower values detect fainter blobs (more detections)
+	 * \param overlap		Maximum allowed overlap ratio [0-1]:
+	 *						- When overlap area > (smaller blob area)*overlap, the smaller blob
+	 *						is suppressed
+	 * 
+	 * \return Array of detected blobs (coordinates + radius)
+	 */
 		static std::vector<blob<FPT>>
 		detect_blobs(const matrix<FPT> &image, FPT min_sigma, FPT max_sigma, size_t num_sigma,
 			FPT threshold_abs, FPT overlap, bool use_prune_blobs)
@@ -681,7 +681,7 @@ namespace blobs {
 			return circle_overlap(d, r1, r2);
 		}
 
-		/** \brief Структура, с которой умеет работать kdtree. */
+		/** \brief Data structure compatible with k-d tree operations. */
 		struct point {
 			constexpr static const int DIM = 2;
 			FPT x, y;
@@ -700,17 +700,17 @@ namespace blobs {
 	public:
 
 		/**
-		 * \brief 	Метод принимает массив пятен и возвращает такой поднабор, что никакие два
-		 * 		из них не пересекаются более чем на overlap. Метод может быть полезен для
-		 * 		объединения результатов нескольких вызовов detect_blobs(). 
+		 * \brief	Filters blobs to remove overlapping detections.
+		 *			Returns a subset where no two blobs overlap by more than the specified ratio.
+		 *			Useful for post-processing multiple detect_blobs() results.
 		 * 
-		 * \param blobs		Исходный массив, в котором окружности могут как угодно пересекаться.
+		 * \param blobs	Input array of potentially overlapping blob detections
 		 * 
-		 * \param overlap	Значение от 0 до 1. Если площадь пересечения двух объектов занимает
-		 * 			от площади наименьшего объекта долю, большую чем overlap,
-		 * 			то меньший объект удаляется.
+		 * \param overlap	Maximum allowed overlap ratio [0-1]:
+		 *					- When overlap area > (smaller blob area)*overlap, the smaller blob
+		 *					is suppressed
 		 * 
-		 * \return Возвращает отфильтрованные объекты (некоторое подмножество @a blobs).
+		 * \return Filtered subset of non-overlapping blobs
 		 */
 		static std::vector<blob<FPT>>
 		prune_blobs(std::vector<blob<FPT>> blobs, FPT overlap)

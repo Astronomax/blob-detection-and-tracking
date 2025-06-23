@@ -10,19 +10,19 @@
 #include <boost/pool/pool_alloc.hpp>
 
 /**
- * \brief 	Singleton-класс, реализующий быстрое преобразование Фурье.
- * 			Позволяет перемножить два многочлена длины n за O(nlogn).
+ * \brief  Singleton class implementing the Fast Fourier Transform (FFT).
+ *         Allows multiplying two polynomials of length n in O(n log n) time.
  * 
- * \tparam FPT 		floating point type (тип, используемый внутри класса в качестве fpt).
+ * \tparam FPT     Floating point type (type used internally by the class as fpt).
  */
 template<typename FPT>
 struct fft_fast {
 	fft_fast() = delete;
 
 	/**
-	 * \brief 	Метод ининциализирует внутренние массивы, которые используются compute().
-	 * 			Должен быть вызван как мимнимум один раз в начале. Если Вы вызовете
-	 * 			compute до инициализации, то получите неопределенное поведение.
+	 * \brief	The method initializes internal arrays used by compute(). Must
+	 * 			be called at least once at the beginning. Calling compute()
+	 *          before initialization is UB.
 	 */
 	static void 
 	init()
@@ -57,16 +57,16 @@ struct fft_fast {
 	};
 
 	/**
-	 * \brief 	Метод совершает преобразование Фурье над исходным массивом a.
+	 * \brief  Performs Fourier transform on the input array 'a'.
 	 * 
-	 * \param base	Логарифм от размера входных векторов a и f.
-	 * \param a		Входной массив, к которому требуется применить преобразование Фурье.
-	 * 				Размер массива должен быть в точности равен 2^base.
-	 * \param f		Выходной массив, в который требуется сохранить результат преобразования.
-	 * 				Размер массива должен быть в точности равен 2^base.
+	 * \param base  Logarithm of the size of input vectors 'a' and 'f' (base-2).
+	 * \param a     Input array to apply Fourier transform to.
+	 * 				Array size must be exactly 2^base.
+	 * \param f     Output array to store the transform result.
+	 * 				Array size must be exactly 2^base.
 	 * 
-	 * \return		Результат преобразования (значния многочлена в 2^base точках).
-	 */	
+	 * \return      Transform result (polynomial values at 2^base points).
+	 */
 	static void 
 	compute(int base, const std::vector<complex_num> &a, std::vector<complex_num> &f)
 	{
@@ -75,7 +75,7 @@ struct fft_fast {
 			f[i] = a[rev[base][i]];
 		for(ptrdiff_t k = 1; k < N; k <<= 1) {
 			for(ptrdiff_t i = 0; i < N; i += 2 * k) {
-				/* ARM-NEON векторизация (см. https://developer.arm.com/architectures/instruction-sets
+				/* ARM-NEON vectorization (см. https://developer.arm.com/architectures/instruction-sets
 					/intrinsics/#f:@navigationhierarchiessimdisa=[Neon]) */
 	#ifdef RASPBERRYPI
 				ptrdiff_t R = k - k % 4;
@@ -113,12 +113,12 @@ struct fft_fast {
 	}
 
 	/**
-	 * \brief 	Метод перемножает два многочлена при помощи преобразования Фурье за O(nlogn).
+	 * \brief  Multiplies two polynomials using Fourier transform in O(n log n) time.
 	 * 
-	 * \param A		Первый многочлен. A[y] соответствует коэффициенту при x^y.
-	 * \param B		Второй многочлен. B[y] соответствует коэффициенту при x^y.
+	 * \param A     First polynomial. A[y] corresponds to the coefficient of x^y.
+	 * \param B     Second polynomial. B[y] corresponds to the coefficient of x^y.
 	 * 
-	 * \return		Произведение многочленов A и B.
+	 * \return      Product of polynomials A and B.
 	 */
 	static std::vector<FPT> 
 	multiply_polynomials(const std::vector<FPT> &A, const std::vector<FPT> &B)

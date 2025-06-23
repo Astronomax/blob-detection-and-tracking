@@ -1,0 +1,2 @@
+add_subdirectory(blob_detector)
+add_subdirectory(blob_tracker)
