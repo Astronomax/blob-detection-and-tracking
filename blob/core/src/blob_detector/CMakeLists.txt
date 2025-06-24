@@ -11,7 +11,7 @@ set(HEADERS
         blob_detector.hpp
         fft/fft_fast.hpp
         fft/fft_slow.hpp
-        kdtree/kdtree.hpp
+        kdtree/kdtree.h
         )
 
 add_library(blob_detector SHARED ${HEADERS})

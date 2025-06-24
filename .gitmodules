@@ -1,0 +1,3 @@
+[submodule "blob/core/src/blob_detector/kdtree"]
+	path = blob/core/src/blob_detector/kdtree
+	url = git@github.com:gishi523/kd-tree.git

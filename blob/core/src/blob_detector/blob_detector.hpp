@@ -4,7 +4,8 @@
 #include <vector>
 #include <cstdint>
 #include "../blob/blob.hpp"
-#include "kdtree/kdtree.hpp"
+#include <cmath>
+#include "kdtree/kdtree.h"
 #include "fft/fft_fast.hpp"
 #include "fft/fft_slow.hpp"
 #include <boost/numeric/ublas/matrix.hpp>
