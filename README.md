@@ -1,5 +1,6 @@
 # blob detection and tracking library
 
+[![CI](https://github.com/Astronomax/blob-detection-and-tracking/actions/workflows/ci.yml/badge.svg)](https://github.com/Astronomax/blob-detection-and-tracking/actions/workflows/ci.yml)
 ![C++](https://img.shields.io/badge/C%2B%2B-17%2B-blue)
 ![Python](https://img.shields.io/badge/Python-3.7%2B-green)
 

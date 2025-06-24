@@ -1,0 +1,54 @@
+name: CI Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'  # Добавляем рекурсивную инициализацию сабмодулей
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libboost-all-dev \
+          libgtest-dev \
+          googletest \
+          pybind11-dev \
+          python3-dev \
+          python3-pip
+        
+        # Build and install GTest
+        cd /usr/src/googletest
+        sudo cmake .
+        sudo make
+        sudo make install
+        
+        # Install pybind11 via pip
+        pip install pybind11
+
+    - name: Verify submodules
+      run: |
+        git submodule status
+        git submodule update --init --recursive
+
+    - name: Configure and build
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_POLICY_DEFAULT_CMP0167=NEW \
+          -DPYBIND11_DIR=$(python3 -c "import pybind11; print(pybind11.get_cmake_dir())")
+        make -j$(nproc)
+        
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure

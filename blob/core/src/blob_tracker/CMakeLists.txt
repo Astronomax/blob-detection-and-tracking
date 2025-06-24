@@ -58,4 +58,3 @@ target_link_libraries(blob_tracker PUBLIC
         Boost::system
         Boost::filesystem
         )
-target_compile_definitions(blob_tracker PUBLIC -DPROJECT_ROOT="${PROJECT_ROOT}")

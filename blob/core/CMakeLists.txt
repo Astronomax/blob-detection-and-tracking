@@ -13,7 +13,6 @@ find_package(Threads REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(GTest)
 
-set(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "/opt/boost")
 set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/opt/boost/lib")
 
@@ -24,7 +23,6 @@ set(CORE_INCLUDE_DIRS
 )
 
 if(GTEST_FOUND)
-    enable_testing()
     add_subdirectory(test)
 else(GTEST_FOUND)
     message(WARNING "GTest not found")
