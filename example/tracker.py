@@ -1,66 +1,97 @@
 import numpy as np
 import cv2
-import imageio
 from tqdm import tqdm
 from blob import detect_blobs, ConvMethod, BlobTracker, ObjectStatus
 
-def process_gif(input_path, output_path, processing_size=250, output_fps=None):
+def process_video(input_path, output_path, processing_size=250, output_fps=None):
+    tracker = BlobTracker(use_prediction=True, use_ttl=True, ttl=100)
 
-    tracker = BlobTracker(use_prediction=True)
+    status_colors = {
+        0: (0, 255, 0),
+        1: (0, 0, 255),
+        2: (255, 0, 0),
+        3: (128, 128, 128)
+    }
 
-    colors = [
-        (31, 119, 180), (255, 127, 14), (44, 160, 44), (214, 39, 40),
-        (148, 103, 189), (140, 86, 75), (227, 119, 194), (127, 127, 127),
-        (188, 189, 34), (23, 190, 207), (174, 199, 232), (255, 187, 120)
-    ]
+    next_id = 1
+    id_map = {}
 
-    with imageio.get_reader(input_path) as reader:
-        input_fps = reader.get_meta_data().get('fps', 10)
-        frame_delay = 1.0 / input_fps if output_fps is None else 1.0 / output_fps
+    cap = cv2.VideoCapture(input_path)
+    if not cap.isOpened():
+        raise ValueError(f"Could not open video file {input_path}")
 
-        with imageio.get_writer(
-            output_path, 
-            mode='I', 
-            duration=frame_delay * 1000
-        ) as writer:
-            for frame in tqdm(reader, desc="Processing GIF"):
-                gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY) if frame.ndim == 3 else frame
-                scale = processing_size / max(gray.shape)
-                small_img = cv2.resize(gray, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-                img_normalized = 1.0 - (small_img.astype(np.float32) / 255.0)
-                
-                blobs = detect_blobs(
-                    image=img_normalized,
-                    min_sigma=1.0,
-                    max_sigma=6.0,
-                    num_sigma=5,
-                    threshold_abs=0.25,
-                    overlap=0.1,
-                    method=ConvMethod.FFT_SLOW
-                )
-                
-                tracked = tracker.track(blobs, 30.0, 1.5)
+    input_fps = cap.get(cv2.CAP_PROP_FPS)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-                for obj in tracked:
-                    if obj['status'] == ObjectStatus.DIED:
-                        continue
-                    color = colors[obj['id'] % len(colors)]
-                    center = (int(obj['x']/scale), int(obj['y']/scale))
-                    radius = int(obj['r']/scale)
-                    cv2.circle(frame, center, radius, color, 2)
-                    cv2.putText(frame, str(obj['id']), 
-                               (center[0]-5, center[1]-radius-5),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
-                
-                writer.append_data(frame)
+    fps = output_fps if output_fps is not None else input_fps
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+    with tqdm(total=frame_count, desc="Processing Video") as pbar:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            gray = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2GRAY) if frame_rgb.ndim == 3 else frame_rgb
+            scale = processing_size / max(gray.shape)
+            small_img = cv2.resize(gray, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+            img_normalized = 1.0 - (small_img.astype(np.float32) / 255.0)
+
+            blobs = detect_blobs(
+                image=img_normalized,
+                min_sigma=1.0,
+                max_sigma=6.0,
+                num_sigma=5,
+                threshold_abs=0.35,
+                overlap=0.1,
+                method=ConvMethod.FFT_SLOW
+            )
+
+            tracked = tracker.track(blobs, 1000.0, 1.5)
+
+            for obj in tracked:
+                if obj['id'] not in id_map:
+                    id_map[obj['id']] = next_id
+                    next_id += 1
+
+            for obj in tracked:
+                status = obj['status']
+                if status == 3:  # DIED
+                    continue
+
+                display_id = id_map[obj['id']]
+
+                color = status_colors[status]
+
+                center = (int(obj['x']/scale), int(obj['y']/scale))
+                radius = int(obj['r']/scale)
+
+                cv2.circle(frame, center, radius, color, 2)
+
+                status_text = ["BORN", "ALIVE", "GHOST", "DIED"][status]
+                cv2.putText(frame, f"{display_id}:{status_text}",
+                           (center[0]-15, center[1]-radius-5),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+
+            out.write(frame)
+            pbar.update(1)
+
+    cap.release()
+    out.release()
 
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 3:
-        print("Usage: python tracker.py input.gif output.gif [processing_size] [output_fps]")
+        print("Usage: python tracker.py input.mp4 output.mp4 [processing_size] [output_fps]")
         sys.exit(1)
     
     processing_size = int(sys.argv[3]) if len(sys.argv) > 3 else 250
     output_fps = int(sys.argv[4]) if len(sys.argv) > 4 else None
     
-    process_gif(sys.argv[1], sys.argv[2], processing_size, output_fps)
+    process_video(sys.argv[1], sys.argv[2], processing_size, output_fps)

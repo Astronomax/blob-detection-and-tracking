@@ -179,11 +179,15 @@ void bind_prune_blobs(py::module& m) {
 
 void bind_blob_tracker(py::module& m) {
     py::class_<blob_tracker>(m, "BlobTracker")
-        .def(py::init<bool>(),
+        .def(py::init<bool, bool, int>(),
             py::arg("use_prediction") = true,
+            py::arg("use_ttl") = true,
+            py::arg("ttl") = 10,
             "Initialize blob tracker\n\n"
             "Args:\n"
-            "    use_prediction: Whether to use Kalman filter prediction (default: True)"
+            "    use_prediction: Whether to use Kalman filter prediction (default: True)\n"
+            "    use_ttl: Whether to use Time-To-Live for objects (default: True)\n"
+            "    ttl: Number of frames to keep objects after they disappear (default: 10)"
         )
         .def("track", 
             [](blob_tracker& tracker, 

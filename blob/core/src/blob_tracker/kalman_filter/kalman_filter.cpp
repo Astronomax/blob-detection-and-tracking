@@ -27,15 +27,15 @@ kalman_filter::kalman_filter(float dt, float std_acc, float x_std_meas, float y_
 	H = make_matrix({{1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
 					 {0.f, 1.f, 0.f, 0.f, 0.f, 0.f}});
 	Q = make_matrix({
-		{powf(dt, 4.f) / 4.f, 0.f, powf(dt, 3.f) / 2.f, 0.f, powf(dt, 2.f) / 2.f, 0.f},
-		{0.f, powf(dt, 4.f) / 4.f, 0.f, powf(dt, 3.f) / 2.f, 0.f, powf(dt, 2.f) / 2.f},
-		{powf(dt, 3.f) / 2.f, 0.f, powf(dt, 2.f), 0.f, dt, 0.f},
-		{0.f, powf(dt, 3.f) / 2.f, 0.f, powf(dt, 2.f), 0.f, dt},
-		{powf(dt, 2.f) / 2.f, 0.f, dt, 0.f, 1.f, 0.f},
-		{0.f, powf(dt, 2.f) / 2.f, 0.f, dt, 0.f, 1.f}}) * powf(std_acc, 2.f);
+		{powf(dt, 4.f) / 4.f,	0.f,					powf(dt, 3.f) / 2.f,	0.f,					powf(dt, 2.f) / 2.f,	0.f},
+		{0.f,					powf(dt, 4.f) / 4.f,	0.f,					powf(dt, 3.f) / 2.f,	0.f, 					powf(dt, 2.f) / 2.f},
+		{powf(dt, 3.f) / 2.f,	0.f,					powf(dt, 2.f),			0.f,					dt,						0.f},
+		{0.f,					powf(dt, 3.f) / 2.f,	0.f,					powf(dt, 2.f),			0.f,					dt},
+		{powf(dt, 2.f) / 2.f,	0.f,					dt,						0.f,					1.f,					0.f},
+		{0.f,					powf(dt, 2.f) / 2.f,	0.f,					dt,						0.f,					1.f}}) * powf(std_acc, 2.f);
 	R = make_matrix({{powf(x_std_meas, 2.f), 0.f},
 					 {0.f, powf(y_std_meas, 2.f)}});
-	P = boost::numeric::ublas::identity_matrix(A.size2());
+	P = boost::numeric::ublas::identity_matrix(A.size2()) * 100.f;
 }
 
 std::pair<float, float>

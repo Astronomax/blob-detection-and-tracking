@@ -295,7 +295,7 @@ namespace blobs {
     }
 
     TEST(blob_tracker, test1) {
-        blob_tracker tracker(true);
+        blob_tracker tracker(true, false, 0);
         std::vector<blob<double>> blobs = {{0, 0, 1}};
         auto objects = tracker.track(blobs, 10.f, 1.7);
         ASSERT_EQ(objects.size(), 1);
@@ -317,7 +317,7 @@ namespace blobs {
     }
 
     TEST(blob_tracker, test2) {
-        blob_tracker tracker(true);
+        blob_tracker tracker(true, false, 0);
         std::vector<blob<double>> blobs = {{0, 0, 1}, {0, 1, 1}, {0, 2, 1}};
         auto objects = tracker.track(blobs, 1e12, 1.7);
         ASSERT_EQ(objects.size(), 3);

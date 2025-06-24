@@ -5,6 +5,7 @@
 #include <numeric>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
+
 template<class T>
 using matrix = boost::numeric::ublas::matrix<T>;
 
@@ -13,7 +14,8 @@ namespace blobs {
 		double i, j;
 	};
 
-	blob_tracker::blob_tracker(bool use_prediction) : m_use_prediction(use_prediction)
+	blob_tracker::blob_tracker(bool use_prediction, bool use_ttl, int ttl)
+		: m_use_prediction(use_prediction), m_use_ttl(use_ttl), initial_ttl(ttl)
 	{
 		std::vector<unsigned int> ids(4 * MAXN);
 		std::iota(ids.begin(), ids.end(), 0);
@@ -21,13 +23,12 @@ namespace blobs {
 	}
 
 	blob_tracker::internal_state::internal_state() :
-		kf(0.1, 1, 0.1, 0.1), ttl(0) {}
+		kf(0.1, 0.1, 3.0, 3.0), ttl(0) {}
 
 	std::vector<blob_tracker::object>
 	blob_tracker::track
 		(const std::vector<blob<double>> &blobs,
-		double move_threshold,
-		double scale_threshold)
+		double move_threshold, double scale_threshold)
 	{
 		size_t n = state.size();
 		size_t m = blobs.size();
@@ -36,7 +37,7 @@ namespace blobs {
 
 		std::vector<position> predictions(n);
 		for (ptrdiff_t i = 0; i < n; i++) {
-			if(m_use_prediction) {
+			if (m_use_prediction) {
 				auto p = state[i].kf.predict();
 				predictions[i].i = p.first;
 				predictions[i].j = p.second;
@@ -48,6 +49,7 @@ namespace blobs {
 
 		if (m > MAXN)
 			throw std::invalid_argument("track: invalid argument!");
+
 		std::fill(c.data().begin(), c.data().end(), true);
 		for (ptrdiff_t i = 0; i < n; i++) {
 			for (ptrdiff_t j = 0; j < m; j++) {
@@ -72,29 +74,35 @@ namespace blobs {
 		for (ptrdiff_t i = 0; i < n; i++) {
 			auto obj_data = state[i];
 			if (matching[i] == -1) {
-				if (obj_data.obj.status == o_status::ALIVE ||
-					obj_data.obj.status == o_status::BORN)
-				{
-					//obj_data.ttl = 10;
-					//obj_data.obj.status = o_status::GHOST;
-					obj_data.obj.status = o_status::DIED;
-					id_pool.insert(obj_data.obj.id);
-				} else if (obj_data.obj.status == o_status::GHOST) {
-					if (--obj_data.ttl == 0) {
-						obj_data.obj.status = o_status::DIED;
-						id_pool.insert(obj_data.obj.id);
-					}
+				switch (obj_data.obj.status) {
+					case o_status::ALIVE:
+					case o_status::BORN:
+						if (m_use_ttl) {
+							obj_data.ttl = initial_ttl;
+							obj_data.obj.status = o_status::GHOST;
+						} else {
+							obj_data.obj.status = o_status::DIED;
+							id_pool.insert(obj_data.obj.id);
+						}
+						break;
+					case o_status::GHOST:
+						if (--obj_data.ttl == 0) {
+							obj_data.obj.status = o_status::DIED;
+							id_pool.insert(obj_data.obj.id);
+						}
+						break;
+					default:
+						exit(1);
 				}
-				obj_data.obj.blob_data.y = (int)predictions[i].i;
-				obj_data.obj.blob_data.x = (int)predictions[i].j;
+				obj_data.obj.blob_data.y = (int) predictions[i].i;
+				obj_data.obj.blob_data.x = (int) predictions[i].j;
 			} else {
 				born[matching[i]] = false;
 				obj_data.obj.blob_data = blobs[matching[i]];
 				obj_data.obj.status = o_status::ALIVE;
 			}
-			if (obj_data.obj.status != o_status::DIED) {
+			if (obj_data.obj.status != o_status::DIED)
 				next_internal_state.push_back(obj_data);
-			}
 			objects.push_back(obj_data.obj);
 		}
 
@@ -108,7 +116,7 @@ namespace blobs {
 			}
 		}
 		state = next_internal_state;
-		if(m_use_prediction) {
+		if (m_use_prediction) {
 			for (auto &obj_data: state) {
 				obj_data.kf.update({
 					(double) obj_data.obj.blob_data.y,

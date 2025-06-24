@@ -3,3 +3,7 @@ blob.egg-info
 build
 dist
 .vscode
+example/ball_motion.mp4
+example/ball_motion_with_obstacle.mp4
+example/ball_motion_out.mp4
+example/ball_motion_with_obstacle_out.mp4

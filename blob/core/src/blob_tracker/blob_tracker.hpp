@@ -14,7 +14,7 @@ namespace blobs {
 	class blob_tracker {
 	public:
 		constexpr static const size_t MAXN = hungarian::MAXN;	/*!< Maximum number of objects per frame */
-		blob_tracker(bool use_prediction);
+		blob_tracker(bool use_prediction, bool use_ttl, int ttl);
 
 		/*! Object tracking status */
 		enum class o_status {
@@ -70,7 +70,8 @@ namespace blobs {
 			int ttl;
 		};
 	private:
-		bool m_use_prediction;
+		bool m_use_prediction, m_use_ttl;
+		int initial_ttl;
 		std::vector<internal_state> state;
 		std::unordered_set<unsigned int> id_pool;
 	};
