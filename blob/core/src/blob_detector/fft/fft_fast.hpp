@@ -1,7 +1,9 @@
 #ifndef BLOB_TRACKER_FFT_FAST_HPP
 #define BLOB_TRACKER_FFT_FAST_HPP
 
-#ifdef RASPBERRYPI
+#include "config.h"
+
+#if defined(HAVE_ARM_NEON_H) && defined(HAVE_NEON)
 #include <arm_neon.h>
 #endif
 
@@ -77,7 +79,7 @@ struct fft_fast {
 			for(ptrdiff_t i = 0; i < N; i += 2 * k) {
 				/* ARM-NEON vectorization (см. https://developer.arm.com/architectures/instruction-sets
 					/intrinsics/#f:@navigationhierarchiessimdisa=[Neon]) */
-	#ifdef RASPBERRYPI
+	#if defined(HAVE_ARM_NEON_H) && defined(HAVE_NEON)
 				ptrdiff_t R = k - k % 4;
 				for(ptrdiff_t x = 0; x < R; x += 4) {
 					float32x4x2_t a = vld2q_f32(reinterpret_cast<FPT *>(&f[y + x + k]));
@@ -101,13 +103,13 @@ struct fft_fast {
 					f[y + x + k] = f[y + x] - z;
 					f[y + x] = f[y + x] + z;
 				}
-	#else //RASPBERRYPI
+	#else //HAVE_ARM_NEON_H && HAVE_NEON
 				for(ptrdiff_t j = 0; j < k; j++) {
 					complex_num z = f[i + j + k] * root[j + k];
 					f[i + j + k] = f[i + j] - z;
 					f[i + j] = f[i + j] + z;
 				}
-	#endif //RASPBERRYPI
+	#endif //HAVE_ARM_NEON_H && HAVE_NEON
 			}
 		}
 	}

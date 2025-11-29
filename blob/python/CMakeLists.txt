@@ -30,7 +30,6 @@ target_link_libraries(${MODULE_NAME} PRIVATE
 target_include_directories(${MODULE_NAME} PRIVATE
     ${PYTHON_INCLUDE_DIRS}
     ${pybind11_INCLUDE_DIRS}
-    ${CORE_INCLUDE_DIRS}
 )
 
 if(UNIX AND NOT APPLE)

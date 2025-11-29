@@ -16,12 +16,6 @@ find_package(GTest)
 set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "/opt/boost")
 set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/opt/boost/lib")
 
-set(CORE_INCLUDE_DIRS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/blob"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/blob_detector"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/blob_tracker"
-)
-
 if(GTEST_FOUND)
     add_subdirectory(test)
 else(GTEST_FOUND)
